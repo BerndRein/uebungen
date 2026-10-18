@@ -1,0 +1,787 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=1920, height=1080" />
+    <title>Obsidian — Sharpen your thinking.</title>
+    <script src="https://cdn.jsdelivr.net/npm/gsap@3.14.2/dist/gsap.min.js"></script>
+    <style>
+      @font-face { font-family: "Inter"; src: url("assets/fonts/Inter-Regular.otf"); font-weight: 400; }
+      @font-face { font-family: "Inter"; src: url("assets/fonts/Inter-Medium.otf"); font-weight: 500; }
+      @font-face { font-family: "Inter"; src: url("assets/fonts/Inter-SemiBold.otf"); font-weight: 600; }
+      @font-face { font-family: "Inter"; src: url("assets/fonts/Inter-Bold.otf"); font-weight: 700; }
+
+      :root {
+        --bg: #0f0f0f;
+        --s1: #1e1e1e;
+        --s2: #262626;
+        --s3: #303030;
+        --tx: #eeeeee;
+        --mu: #a3a3a3;
+        --accent: #7c3aed;
+        --link: #a88bfa;
+        --caret: #8b5cf6;
+        --green: #22c55e;
+      }
+      * { margin: 0; padding: 0; box-sizing: border-box; }
+      html, body { width: 1920px; height: 1080px; overflow: hidden; background: var(--bg); }
+      #root {
+        position: relative; width: 100%; height: 100%; overflow: hidden;
+        font-family: "Inter", sans-serif; color: var(--tx); background: var(--bg);
+        -webkit-font-smoothing: antialiased;
+      }
+      .scene { position: absolute; inset: 0; overflow: hidden; }
+      .ground { position: absolute; inset: 0; background: var(--bg); }
+      .cam { position: absolute; left: 0; top: 0; width: 1920px; height: 1080px; transform-origin: 0 0; }
+      .super {
+        position: absolute; left: 0; right: 0; top: 78px; text-align: center;
+        font-weight: 600; font-size: 92px; letter-spacing: -0.035em; line-height: 1.1; color: var(--tx);
+        z-index: 20;
+      }
+      .super .w { display: inline-block; opacity: 0; }
+      .topfade { position: absolute; left: 0; right: 0; top: 0; height: 330px; z-index: 10; }
+      .ico { display: inline-block; vertical-align: middle; }
+      .ico svg { display: block; }
+
+      /* ---------- Scene 1: scattered thoughts ---------- */
+      .frag { position: absolute; white-space: nowrap; font-weight: 500; letter-spacing: -0.01em; opacity: 0; }
+      #s1-super { top: 488px; font-size: 104px; }
+      #s1-caret { position: absolute; left: 958px; top: 512px; width: 4px; height: 56px; border-radius: 2px; background: var(--caret); opacity: 0; }
+
+      /* ---------- Obsidian app window ---------- */
+      .win {
+        position: absolute; left: 200px; top: 250px; width: 1520px; height: 790px;
+        background: var(--s1); border-radius: 14px; overflow: hidden;
+        box-shadow: 0 0 0 1px rgba(255,255,255,0.08), 0 50px 140px rgba(0,0,0,0.65);
+        display: grid; grid-template-columns: 52px 300px 1fr; grid-template-rows: 46px 1fr;
+      }
+      .tb-left { grid-column: 1 / 3; background: var(--s2); display: flex; align-items: center; gap: 18px; padding-left: 18px; border-right: 1px solid #333; }
+      .lights { display: flex; gap: 8px; margin-right: 10px; }
+      .lights i { display: block; width: 12px; height: 12px; border-radius: 50%; }
+      .tb-right { background: var(--s2); display: flex; align-items: flex-end; padding-left: 8px; }
+      .tab { height: 38px; padding: 0 14px 0 16px; display: flex; align-items: center; gap: 40px; background: var(--s1); border-radius: 8px 8px 0 0; font-size: 14px; color: #ddd; }
+      .tab-plus { height: 38px; display: flex; align-items: center; padding: 0 12px; }
+      .ribbon { background: var(--s2); border-right: 1px solid #333; display: flex; flex-direction: column; align-items: center; gap: 20px; padding-top: 16px; }
+      .side { background: var(--s2); border-right: 1px solid #333; padding: 12px 10px; font-size: 15px; color: #b5b5b5; }
+      .side-tools { display: flex; gap: 18px; justify-content: center; padding: 4px 0 16px; }
+      .tree-row { height: 31px; display: flex; align-items: center; gap: 6px; padding: 0 8px; border-radius: 6px; white-space: nowrap; }
+      .tree-row.f { padding-left: 30px; }
+      .tree-row.active { background: #363636; color: #f0f0f0; }
+      .main { position: relative; background: var(--s1); }
+      .viewhead { height: 44px; display: flex; align-items: center; justify-content: center; font-size: 14px; color: #8f8f8f; position: relative; }
+      .viewhead .nav { position: absolute; left: 16px; top: 12px; display: flex; gap: 14px; }
+      .doc { width: 760px; margin: 22px auto 0; font-size: 20px; line-height: 1.62; color: #d8d8d8; }
+      .doc h1 { font-size: 40px; font-weight: 700; letter-spacing: -0.02em; color: #f1f1f1; line-height: 1.2; margin-bottom: 12px; }
+      .doc h2 { font-size: 27px; font-weight: 600; color: #ececec; margin: 24px 0 8px; letter-spacing: -0.01em; }
+      .tag { display: inline-block; font-size: 15px; line-height: 1; padding: 6px 11px; border-radius: 999px; background: rgba(124,58,237,0.2); color: var(--link); margin-bottom: 18px; }
+      .doc ul { padding-left: 26px; }
+      .doc li { margin: 4px 0; }
+      .doc li::marker { color: #777; }
+      .lnk { color: var(--link); }
+      .ch { display: none; }
+      #s2-link { display: none; }
+      .caret { display: inline-block; width: 2px; height: 1.2em; background: var(--caret); vertical-align: -0.22em; margin-left: 1px; }
+      .status { position: absolute; right: 0; bottom: 0; background: var(--s2); border-top-left-radius: 8px; padding: 6px 14px; font-size: 13px; color: #8f8f8f; display: flex; gap: 18px; }
+
+      .suggest {
+        position: absolute; width: 440px; background: #262626; border-radius: 10px; opacity: 0;
+        box-shadow: 0 0 0 1px rgba(255,255,255,0.09), 0 18px 50px rgba(0,0,0,0.55); padding: 6px; z-index: 5;
+      }
+      .sg-list .it { padding: 8px 12px; border-radius: 6px; font-size: 16px; color: #cfcfcf; }
+      .sg-list .it small { display: block; font-size: 12.5px; color: #7d7d7d; margin-top: 1px; }
+      .sg-list .it.sel { background: rgba(255,255,255,0.075); color: #f2f2f2; }
+      .sg-list b { color: #fff; font-weight: 700; }
+      #sg-b { display: none; }
+      .sg-foot { font-size: 12px; color: #777; padding: 8px 12px 4px; border-top: 1px solid #333; margin-top: 4px; display: flex; gap: 14px; }
+
+      .preview {
+        position: absolute; width: 540px; background: var(--s1); border-radius: 10px; padding: 22px 26px 24px; opacity: 0;
+        box-shadow: 0 0 0 1px rgba(255,255,255,0.1), 0 24px 70px rgba(0,0,0,0.6); z-index: 6;
+      }
+      .preview h3 { font-size: 26px; font-weight: 700; color: #f1f1f1; margin-bottom: 8px; letter-spacing: -0.01em; }
+      .preview p { font-size: 17px; line-height: 1.55; color: #cfcfcf; }
+      .bars { display: flex; align-items: flex-end; gap: 14px; height: 92px; margin-top: 18px; }
+      .bars div { width: 64px; border-radius: 5px 5px 2px 2px; background: linear-gradient(#a88bfa, #7c3aed); position: relative; }
+      .bars span { position: absolute; bottom: -24px; left: 0; right: 0; text-align: center; font-size: 13px; color: #8f8f8f; }
+      #s2-cursor { position: absolute; width: 30px; height: 30px; z-index: 8; opacity: 0; }
+      #s2-dot { position: absolute; left: 950px; top: 530px; width: 20px; height: 20px; border-radius: 50%; background: #f2f2f2; opacity: 0; box-shadow: 0 0 24px 6px rgba(168,139,250,0.55); }
+
+      /* ---------- Scene 3: graph ---------- */
+      #s3-svg { position: absolute; left: 0; top: 0; overflow: visible; }
+      #s3-svg text { font-family: "Inter", sans-serif; font-size: 14px; font-weight: 500; fill: #a3a3a3; paint-order: stroke; stroke: #0f0f0f; stroke-width: 4px; }
+
+      /* ---------- Scene 4: canvas ---------- */
+      #s4 .ground { background: #191919; }
+      #s4-world {
+        position: absolute; left: 0; top: 0; width: 3200px; height: 2000px;
+        background-color: #191919;
+        background-image: radial-gradient(circle, rgba(255,255,255,0.10) 1.3px, transparent 1.8px);
+        background-size: 26px 26px;
+      }
+      .cv { position: absolute; background: var(--s1); border: 2px solid #3d3d3d; border-radius: 10px; padding: 18px 22px; font-size: 18px; line-height: 1.5; color: #d6d6d6; }
+      .cv h4 { font-size: 22px; font-weight: 700; color: #f0f0f0; margin-bottom: 6px; letter-spacing: -0.01em; }
+      .cv.g { border-color: rgba(34,197,94,0.75); background: #1b231d; }
+      .grp { position: absolute; border-radius: 14px; border: 2px solid; }
+      .grp .lab { position: absolute; left: 0; top: -42px; font-size: 18px; font-weight: 600; color: #0d0d0d; padding: 5px 11px; border-radius: 6px; }
+      .grp.green { border-color: rgba(34,197,94,0.75); background: rgba(34,197,94,0.06); }
+      .grp.green .lab { background: var(--green); }
+      .grp.yellow { border-color: rgba(234,179,8,0.75); background: rgba(234,179,8,0.07); }
+      .grp.yellow .lab { background: #eab308; }
+      .portrait { position: absolute; width: 200px; height: 245px; border-radius: 8px; overflow: hidden; border: 2px solid #3d3d3d; background: #222; }
+      .portrait img { width: 100%; height: 100%; object-fit: cover; display: block; }
+      #s4-edges { position: absolute; left: 0; top: 0; overflow: visible; }
+
+      /* card used in canvas + flip */
+      .note-card { width: 480px; height: 300px; }
+      .note-card .t { font-size: 26px; font-weight: 700; color: #f1f1f1; letter-spacing: -0.015em; margin-bottom: 8px; }
+      .note-card .tg { display: inline-block; font-size: 13px; padding: 4px 9px; border-radius: 999px; background: rgba(124,58,237,0.2); color: var(--link); margin-bottom: 12px; }
+      .note-card p { font-size: 17px; line-height: 1.55; color: #d0d0d0; }
+
+      /* ---------- Scene 5: ownership ---------- */
+      #s5-stage { position: absolute; left: 576px; top: 300px; width: 768px; height: 480px; perspective: 2200px; }
+      #s5-flip { position: absolute; inset: 0; transform-style: preserve-3d; }
+      .face { position: absolute; inset: 0; backface-visibility: hidden; -webkit-backface-visibility: hidden; }
+      .face.front .note-card { position: absolute; left: 0; top: 0; transform: scale(1.6); transform-origin: 0 0; }
+      .face.back { transform: rotateY(180deg); background: #141414; border-radius: 16px; box-shadow: 0 0 0 1px rgba(255,255,255,0.09), 0 40px 120px rgba(0,0,0,0.7); overflow: hidden; }
+      .fhead { height: 54px; display: flex; align-items: center; gap: 12px; padding: 0 22px; background: #1d1d1d; border-bottom: 1px solid #2c2c2c; font-size: 17px; color: #9a9a9a; }
+      .fhead .md { margin-left: auto; font-size: 13px; letter-spacing: 0.06em; text-transform: uppercase; color: #a0a0a0; border: 1px solid #444; border-radius: 6px; padding: 3px 8px; }
+      .raw { padding: 20px 30px; font-size: 19.5px; line-height: 1.62; color: #d4d4d4; white-space: pre; font-weight: 400; }
+      .raw .m { color: #8c8c8c; }
+      .raw .h { color: #f0f0f0; font-weight: 600; }
+      .raw .l { color: var(--link); }
+      .chips { position: absolute; left: 0; right: 0; top: 850px; display: flex; justify-content: center; gap: 22px; }
+      .chip { display: flex; align-items: center; gap: 12px; padding: 15px 26px; border-radius: 999px; background: var(--s1); box-shadow: 0 0 0 1px rgba(255,255,255,0.08); font-size: 23px; font-weight: 500; color: #e2e2e2; opacity: 0; }
+
+      /* ---------- Scene 6: plugins ---------- */
+      #s6-panel { position: absolute; left: 510px; top: 292px; width: 900px; background: var(--s1); border-radius: 18px; box-shadow: 0 0 0 1px rgba(255,255,255,0.06), 0 40px 120px rgba(0,0,0,0.6); padding: 10px 36px 16px; opacity: 0; }
+      #s6-panel h5 { font-size: 26px; font-weight: 600; color: #f0f0f0; padding: 22px 0 14px; border-bottom: 1px solid #303030; }
+      .prow { display: flex; align-items: center; padding: 20px 0; border-bottom: 1px solid #2b2b2b; }
+      .prow:last-child { border-bottom: 0; }
+      .prow .nm { font-size: 23px; font-weight: 500; color: #ececec; }
+      .prow .nm span { font-size: 16px; color: #8a8a8a; font-weight: 400; margin-left: 8px; }
+      .prow .ds { font-size: 18px; color: #9b9b9b; margin-top: 4px; }
+      .tog { margin-left: auto; width: 58px; height: 32px; border-radius: 999px; background: #3c3c3c; position: relative; }
+      .tog .on { position: absolute; inset: 0; border-radius: 999px; background: var(--accent); opacity: 0; }
+      .tog .kn { position: absolute; left: 4px; top: 4px; width: 24px; height: 24px; border-radius: 50%; background: #d9d9d9; box-shadow: 0 1px 3px rgba(0,0,0,0.4); }
+      #s6-sub { position: absolute; left: 0; right: 0; top: 812px; text-align: center; font-size: 30px; font-weight: 500; color: var(--mu); opacity: 0; }
+
+      /* ---------- Scene 7: end card ---------- */
+      #s7-group { position: absolute; left: 0; top: 0; width: 1920px; height: 1080px; transform-origin: 960px 540px; }
+      #s7-glow { position: absolute; left: 610px; top: 110px; width: 700px; height: 600px; border-radius: 50%; background: radial-gradient(closest-side, rgba(124,58,237,0.42), rgba(124,58,237,0.0)); opacity: 0; }
+      #s7-logo { position: absolute; left: 820px; top: 230px; width: 280px; height: 280px; transform-origin: 140px 140px; }
+      #s7-mark { position: absolute; inset: 0; opacity: 0; }
+      #s7-mark img { width: 100%; height: 100%; display: block; }
+      #s7-shine {
+        position: absolute; inset: 0;
+        -webkit-mask-image: url("assets/img/obsidian-logo-gradient.svg"); mask-image: url("assets/img/obsidian-logo-gradient.svg");
+        -webkit-mask-size: 100% 100%; mask-size: 100% 100%;
+        background-image: linear-gradient(105deg, rgba(255,255,255,0) 38%, rgba(255,255,255,0.75) 50%, rgba(255,255,255,0) 62%);
+        background-size: 300% 100%; background-repeat: no-repeat; background-position: 130% 0;
+      }
+      #s7-word { position: absolute; left: 794px; top: 556px; width: 332px; height: 55px; opacity: 0; }
+      #s7-word img { width: 100%; height: 100%; display: block; }
+      #s7-head { position: absolute; left: 0; right: 0; top: 488px; text-align: center; font-size: 112px; font-weight: 600; letter-spacing: -0.04em; color: var(--tx); }
+      #s7-head .w { display: inline-block; opacity: 0; }
+      #s7-sub { position: absolute; left: 0; right: 0; top: 648px; text-align: center; font-size: 36px; font-weight: 500; color: var(--mu); opacity: 0; }
+      #s7-cta { position: absolute; left: 0; right: 0; top: 762px; display: flex; flex-direction: column; align-items: center; gap: 22px; }
+      #s7-btn { background: var(--accent); color: #fff; font-size: 30px; font-weight: 500; padding: 20px 40px; border-radius: 14px; opacity: 0; }
+      #s7-url { font-size: 26px; font-weight: 500; color: var(--link); opacity: 0; }
+    </style>
+  </head>
+  <body>
+    <div id="root" data-composition-id="main" data-start="0" data-duration="30" data-width="1920" data-height="1080">
+
+      <!-- ===================== 1 · Ideas scatter. (0–5s) ===================== -->
+      <section id="s1" class="clip scene" data-start="0" data-duration="5" data-track-index="1">
+        <div class="ground"></div>
+        <div id="s1-field"></div>
+        <div id="s1-super" class="super">Ideas scatter.</div>
+        <div id="s1-caret"></div>
+      </section>
+
+      <!-- ===================== 2 · Connect them. (5–10s) ===================== -->
+      <section id="s2" class="clip scene" data-start="5" data-duration="5" data-track-index="1">
+        <div class="ground"></div>
+        <div id="s2-cam" class="cam">
+          <div id="s2-win" class="win">
+            <div class="tb-left">
+              <div class="lights"><i style="background:#ff5f57"></i><i style="background:#febc2e"></i><i style="background:#28c840"></i></div>
+              <span class="ico" data-i="folder" data-s="17" data-c="#8f8f8f"></span>
+              <span class="ico" data-i="search" data-s="17" data-c="#8f8f8f"></span>
+              <span class="ico" data-i="bookmark" data-s="17" data-c="#8f8f8f"></span>
+              <span style="flex:1"></span>
+              <span class="ico" data-i="panel" data-s="17" data-c="#8f8f8f" style="margin-right:16px"></span>
+            </div>
+            <div class="tb-right">
+              <div class="tab">How we learn <span class="ico" data-i="x" data-s="14" data-c="#8f8f8f"></span></div>
+              <div class="tab-plus"><span class="ico" data-i="plus" data-s="16" data-c="#8f8f8f"></span></div>
+            </div>
+            <div class="ribbon">
+              <span class="ico" data-i="graph" data-s="19" data-c="#8f8f8f"></span>
+              <span class="ico" data-i="canvas" data-s="19" data-c="#8f8f8f"></span>
+              <span class="ico" data-i="calendar" data-s="19" data-c="#8f8f8f"></span>
+              <span class="ico" data-i="terminal" data-s="19" data-c="#8f8f8f"></span>
+              <span class="ico" data-i="files" data-s="19" data-c="#8f8f8f"></span>
+            </div>
+            <div class="side">
+              <div class="side-tools">
+                <span class="ico" data-i="pencil" data-s="17" data-c="#8f8f8f"></span>
+                <span class="ico" data-i="folder" data-s="17" data-c="#8f8f8f"></span>
+                <span class="ico" data-i="sort" data-s="17" data-c="#8f8f8f"></span>
+              </div>
+              <div class="tree-row"><span class="ico" data-i="chev-r" data-s="14" data-c="#777"></span>Daily</div>
+              <div class="tree-row"><span class="ico" data-i="chev-r" data-s="14" data-c="#777"></span>Ideas</div>
+              <div class="tree-row"><span class="ico" data-i="chev-d" data-s="14" data-c="#777"></span>Learning</div>
+              <div class="tree-row f active">How we learn</div>
+              <div class="tree-row f">Lecture 4 — Memory</div>
+              <div class="tree-row f">Sleep and memory</div>
+              <div class="tree-row f">Spaced repetition</div>
+              <div class="tree-row f">Thinking, Fast and Slow</div>
+              <div class="tree-row"><span class="ico" data-i="chev-r" data-s="14" data-c="#777"></span>Philosophy</div>
+              <div class="tree-row"><span class="ico" data-i="chev-r" data-s="14" data-c="#777"></span>Projects</div>
+              <div class="tree-row"><span class="ico" data-i="chev-r" data-s="14" data-c="#777"></span>References</div>
+              <div class="tree-row f" style="padding-left:28px">Calmness is a superpower</div>
+              <div class="tree-row f" style="padding-left:28px">Writing is telepathy</div>
+              <div class="tree-row f" style="padding-left:28px">Evergreen notes</div>
+              <div class="tree-row f" style="padding-left:28px">Travel</div>
+            </div>
+            <div class="main">
+              <div class="viewhead">
+                <div class="nav"><span class="ico" data-i="arrow-l" data-s="17" data-c="#777"></span><span class="ico" data-i="arrow-r" data-s="17" data-c="#555"></span></div>
+                Learning / How we learn
+              </div>
+              <div class="doc" id="s2-doc">
+                <h1>How we learn</h1>
+                <span class="tag">#learning</span>
+                <p>Memory isn't a recording. It's a reconstruction — every time we remember something, we rebuild it.</p>
+                <h2>Make it stick</h2>
+                <ul>
+                  <li>Retrieval beats re-reading.</li>
+                  <li>Sleep consolidates what you practiced.</li>
+                  <li id="s2-line">Connect it to what you already know: <span id="s2-anchor"></span><span class="ch">[</span><span class="ch">[</span><span class="ch">S</span><span class="ch">p</span><span id="s2-link" class="lnk">Spaced repetition</span><span id="s2-caret" class="caret"></span></li>
+                </ul>
+              </div>
+              <div class="status"><span>2 backlinks</span><span>61 words</span><span>342 characters</span></div>
+            </div>
+
+            <div id="s2-suggest" class="suggest">
+              <div id="sg-a" class="sg-list">
+                <div class="it sel">Spaced repetition<small>Learning/</small></div>
+                <div class="it">Sleep and memory<small>Learning/</small></div>
+                <div class="it">Thinking, Fast and Slow<small>Learning/</small></div>
+                <div class="it">Writing is telepathy<small>References/</small></div>
+                <div class="it">Calmness is a superpower<small>References/</small></div>
+              </div>
+              <div id="sg-b" class="sg-list">
+                <div class="it sel"><b>Sp</b>aced repetition<small>Learning/</small></div>
+                <div class="it"><b>Sp</b>inoza<small>Philosophy/</small></div>
+                <div class="it"><b>S</b>lee<b>p</b> and memory<small>Learning/</small></div>
+              </div>
+              <div class="sg-foot"><span>↑↓ to navigate</span><span>↵ to select</span><span>esc to dismiss</span></div>
+            </div>
+
+            <div id="s2-preview" class="preview">
+              <h3>Spaced repetition</h3>
+              <p>Review just before you would forget. Every review pushes the next one further out.</p>
+              <div data-layout-allow-overflow class="bars">
+                <div style="height:22%"><span>1 day</span></div>
+                <div style="height:40%"><span>3 days</span></div>
+                <div style="height:64%"><span>1 week</span></div>
+                <div style="height:100%"><span>1 month</span></div>
+              </div>
+              <div style="height:22px"></div>
+            </div>
+          </div>
+          <svg id="s2-cursor" viewBox="0 0 24 24"><path d="M4 2.5 L4 19.5 L8.6 15.4 L11.6 22 L14.6 20.7 L11.7 14.3 L17.8 14.1 Z" fill="#fff" stroke="#111" stroke-width="1.3" stroke-linejoin="round"/></svg>
+        </div>
+        <div id="s2-super" class="super">Connect them.</div>
+        <div id="s2-dot"></div>
+      </section>
+
+      <!-- ===================== 3 · Find hidden patterns. (10–15s) ===================== -->
+      <section id="s3" class="clip scene" data-start="10" data-duration="5" data-track-index="1">
+        <div class="ground"></div>
+        <div id="s3-cam" class="cam">
+          <svg id="s3-svg" width="1920" height="1080" viewBox="0 0 1920 1080">
+            <g id="s3-edges"></g><g id="s3-nodes"></g><g id="s3-labels"></g>
+          </svg>
+        </div>
+        <div class="topfade" style="background:linear-gradient(#0f0f0f 38%, rgba(15,15,15,0))"></div>
+        <div id="s3-super" class="super">Find hidden patterns.</div>
+      </section>
+
+      <!-- ===================== 4 · Think without limits. (15–18.75s) ===================== -->
+      <section id="s4" class="clip scene" data-start="15" data-duration="3.75" data-track-index="1">
+        <div class="ground"></div>
+        <div id="s4-cam" class="cam">
+          <div id="s4-world">
+            <svg id="s4-edges" width="3200" height="2000" viewBox="0 0 3200 2000">
+              <defs>
+                <marker id="arw" viewBox="0 0 10 10" refX="7" refY="5" markerWidth="5" markerHeight="5" orient="auto-start-reverse"><path d="M0 0 L10 5 L0 10 z" fill="#9a9a9a"/></marker>
+                <marker id="arwp" viewBox="0 0 10 10" refX="7" refY="5" markerWidth="5" markerHeight="5" orient="auto-start-reverse"><path d="M0 0 L10 5 L0 10 z" fill="#a88bfa"/></marker>
+              </defs>
+            </svg>
+            <div id="g-lecture" class="grp green" style="left:560px;top:690px;width:600px;height:560px"><div class="lab">Lecture 4 — Memory</div></div>
+            <div class="cv g in-lec" style="left:596px;top:730px;width:252px">Memory is a reconstruction.</div>
+            <div class="cv g in-lec" style="left:872px;top:730px;width:252px">Retrieval beats re‑reading.</div>
+            <div class="cv g in-lec" style="left:596px;top:880px;width:252px">Sleep consolidates practice.</div>
+            <div class="cv g in-lec" style="left:872px;top:880px;width:252px;height:330px">
+              <h4>Forgetting curve</h4>
+              <svg width="204" height="200" viewBox="0 0 204 200"><path d="M6 14 C 40 120, 90 168, 200 180" fill="none" stroke="#22c55e" stroke-width="4" stroke-linecap="round"/><path d="M6 190 H200 M6 10 V190" stroke="#3d3d3d" stroke-width="2"/></svg>
+            </div>
+            <div class="cv g in-lec" style="left:596px;top:1030px;width:252px;height:180px"><h4>Ebbinghaus</h4>1885 · first memory experiments</div>
+
+            <div id="cv-main" class="cv note-card" style="left:1360px;top:860px">
+              <div class="t">How we learn</div><span class="tg">#learning</span>
+              <p>Memory isn't a recording. It's a reconstruction.</p>
+              <p style="margin-top:8px">Connect it to what you already know: <span class="lnk">Spaced repetition</span></p>
+            </div>
+            <div id="cv-spaced" class="cv" style="left:1990px;top:600px;width:420px;height:280px">
+              <h4>Spaced repetition</h4>
+              <div data-layout-allow-overflow class="bars" style="height:120px;margin-top:22px"><div style="height:22%;width:70px"><span>1d</span></div><div style="height:40%;width:70px"><span>3d</span></div><div style="height:64%;width:70px"><span>1w</span></div><div style="height:100%;width:70px"><span>1m</span></div></div>
+            </div>
+            <div id="g-phil" class="grp yellow" style="left:1960px;top:1080px;width:520px;height:340px"><div class="lab">Philosophers</div></div>
+            <div class="portrait in-phil" style="left:1996px;top:1126px"><img src="assets/img/home-descartes.jpg" alt="" /></div>
+            <div class="portrait in-phil" style="left:2244px;top:1126px"><img src="assets/img/home-spinoza.png" alt="" /></div>
+            <div id="cv-cogito" class="cv" style="left:1400px;top:1300px;width:400px">
+              <h4>Cogito, ergo sum</h4>Doubt everything — then rebuild what survives.
+            </div>
+          </div>
+        </div>
+        <div class="topfade" style="background:linear-gradient(#191919 36%, rgba(25,25,25,0))"></div>
+        <div id="s4-super" class="super">Think without limits.</div>
+      </section>
+
+      <!-- ===================== 5 · Your thoughts are yours. (18.75–22.5s) ===================== -->
+      <section id="s5" class="clip scene" data-start="18.75" data-duration="3.75" data-track-index="1">
+        <div class="ground"></div>
+        <div id="s5-canvasbg" class="ground" style="background-color:#191919;background-image:radial-gradient(circle, rgba(255,255,255,0.10) 2.1px, transparent 2.9px);background-size:41.6px 41.6px;background-position:24px 4px"></div>
+        <div id="s5-stage">
+          <div id="s5-flip">
+            <div class="face front">
+              <div class="cv note-card">
+                <div class="t">How we learn</div><span class="tg">#learning</span>
+                <p>Memory isn't a recording. It's a reconstruction.</p>
+                <p style="margin-top:8px">Connect it to what you already know: <span class="lnk">Spaced repetition</span></p>
+              </div>
+            </div>
+            <div class="face back">
+              <div class="fhead"><span class="ico" data-i="file" data-s="18" data-c="#8f8f8f"></span>~/Notes/Learning/How we learn.md<span class="md">Plain text</span></div>
+              <div class="raw"><span class="m">---</span>
+<span class="m">tags:</span> learning
+<span class="m">---</span>
+<span class="m">#</span> <span class="h">How we learn</span>
+Memory isn't a recording. It's a reconstruction.
+<span class="m">##</span> <span class="h">Make it stick</span>
+<span class="m">-</span> Retrieval beats re-reading.
+<span class="m">-</span> Sleep consolidates what you practiced.
+<span class="m">-</span> Connect it to what you already know: <span class="l">[[Spaced repetition]]</span></div>
+            </div>
+          </div>
+        </div>
+        <div class="chips">
+          <div class="chip"><span class="ico" data-i="lock" data-s="24" data-c="#a88bfa"></span>Stored on your device</div>
+          <div class="chip"><span class="ico" data-i="wifioff" data-s="24" data-c="#a88bfa"></span>Works offline</div>
+          <div class="chip"><span class="ico" data-i="file" data-s="24" data-c="#a88bfa"></span>Open file format</div>
+        </div>
+        <div id="s5-super" class="super">Your thoughts are yours.</div>
+      </section>
+
+      <!-- ===================== 6 · Your mind is unique. (22.5–25s) ===================== -->
+      <section id="s6" class="clip scene" data-start="22.5" data-duration="2.5" data-track-index="1">
+        <div class="ground"></div>
+        <div id="s6-panel">
+          <h5>Community plugins</h5>
+          <div class="prow"><div><div class="nm">Calendar<span>by Liam Cain</span></div><div class="ds">Calendar view of your daily notes.</div></div><div class="tog"><div class="on"></div><div class="kn"></div></div></div>
+          <div class="prow"><div><div class="nm">Kanban<span>by Matthew Meyers</span></div><div class="ds">Markdown-backed kanban boards.</div></div><div class="tog"><div class="on"></div><div class="kn"></div></div></div>
+          <div class="prow"><div><div class="nm">Dataview<span>by Michael Brenan</span></div><div class="ds">Advanced queries for the data-obsessed.</div></div><div class="tog"><div class="on"></div><div class="kn"></div></div></div>
+          <div class="prow"><div><div class="nm">Outliner<span>by Viacheslav Slinko</span></div><div class="ds">Work with your lists.</div></div><div class="tog"><div class="on"></div><div class="kn"></div></div></div>
+        </div>
+        <div id="s6-sub">Thousands of plugins and themes.</div>
+        <div id="s6-super" class="super">Your mind is unique.</div>
+      </section>
+
+      <!-- ===================== 7 · End card (25–30s) ===================== -->
+      <section id="s7" class="clip scene" data-start="25" data-duration="5" data-track-index="1">
+        <div class="ground"></div>
+        <div id="s7-group" data-layout-allow-overflow>
+          <div id="s7-glow"></div>
+          <div id="s7-lockup">
+            <div id="s7-logo">
+              <div id="s7-mark"><img src="assets/img/obsidian-logo-gradient.svg" alt="Obsidian" /></div>
+              <div id="s7-shine"></div>
+            </div>
+            <div id="s7-word"><img src="assets/img/obsidian-wordmark.svg" alt="Obsidian" /></div>
+          </div>
+          <div id="s7-head">Sharpen your thinking.</div>
+          <div id="s7-sub">Free without limits.</div>
+          <div id="s7-cta"><div id="s7-btn">Get Obsidian</div><div id="s7-url">obsidian.md</div></div>
+        </div>
+      </section>
+
+      <audio id="score" src="assets/audio/mix.wav" data-start="0" data-duration="30" data-track-index="0" data-volume="1"></audio>
+    </div>
+
+    <script>
+      // ---------- Lucide-style icons (Obsidian's UI icon set) ----------
+      const ICONS = {
+        folder: '<path d="M20 20a2 2 0 0 0 2-2V8a2 2 0 0 0-2-2h-7.9a2 2 0 0 1-1.69-.9L9.6 3.9A2 2 0 0 0 7.93 3H4a2 2 0 0 0-2 2v13a2 2 0 0 0 2 2Z"/>',
+        search: '<circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/>',
+        bookmark: '<path d="m19 21-7-4-7 4V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2v16z"/>',
+        panel: '<rect width="18" height="18" x="3" y="3" rx="2"/><path d="M15 3v18"/>',
+        x: '<path d="M18 6 6 18"/><path d="m6 6 12 12"/>',
+        plus: '<path d="M5 12h14"/><path d="M12 5v14"/>',
+        graph: '<circle cx="12" cy="18" r="3"/><circle cx="6" cy="6" r="3"/><circle cx="18" cy="6" r="3"/><path d="M18 9v2c0 .6-.4 1-1 1H7c-.6 0-1-.4-1-1V9"/><path d="M12 12v3"/>',
+        canvas: '<rect width="7" height="9" x="3" y="3" rx="1"/><rect width="7" height="5" x="14" y="3" rx="1"/><rect width="7" height="9" x="14" y="12" rx="1"/><rect width="7" height="5" x="3" y="16" rx="1"/>',
+        calendar: '<rect width="18" height="18" x="3" y="4" rx="2"/><path d="M16 2v4"/><path d="M8 2v4"/><path d="M3 10h18"/>',
+        terminal: '<path d="m4 17 6-6-6-6"/><path d="M12 19h8"/>',
+        files: '<rect width="14" height="14" x="8" y="8" rx="2"/><path d="M4 16c-1.1 0-2-.9-2-2V4c0-1.1.9-2 2-2h10c1.1 0 2 .9 2 2"/>',
+        pencil: '<path d="M12 20h9"/><path d="M16.5 3.5a2.12 2.12 0 0 1 3 3L7 19l-4 1 1-4Z"/>',
+        sort: '<path d="m3 16 4 4 4-4"/><path d="M7 20V4"/><path d="M11 4h10"/><path d="M11 8h7"/><path d="M11 12h4"/>',
+        "chev-r": '<path d="m9 18 6-6-6-6"/>',
+        "chev-d": '<path d="m6 9 6 6 6-6"/>',
+        "arrow-l": '<path d="m12 19-7-7 7-7"/><path d="M19 12H5"/>',
+        "arrow-r": '<path d="M5 12h14"/><path d="m12 5 7 7-7 7"/>',
+        file: '<path d="M15 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7Z"/><path d="M14 2v4a2 2 0 0 0 2 2h4"/><path d="M10 9H8"/><path d="M16 13H8"/><path d="M16 17H8"/>',
+        lock: '<rect width="18" height="11" x="3" y="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/>',
+        wifioff: '<path d="M12 20h.01"/><path d="M8.5 16.43a5 5 0 0 1 7 0"/><path d="M5 12.86a10 10 0 0 1 5.17-2.69"/><path d="M19 12.86a10 10 0 0 0-2-1.52"/><path d="M2 8.82a15 15 0 0 1 4.18-2.64"/><path d="M22 8.82a15 15 0 0 0-11.29-3.76"/><path d="m2 2 20 20"/>',
+      };
+      document.querySelectorAll(".ico").forEach((el) => {
+        const s = el.dataset.s || 18, c = el.dataset.c || "currentColor";
+        el.innerHTML = `<svg width="${s}" height="${s}" viewBox="0 0 24 24" fill="none" stroke="${c}" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">${ICONS[el.dataset.i] || ""}</svg>`;
+      });
+
+      // ---------- helpers ----------
+      const W = 1920, H = 1080, BEAT = 0.625;
+      function mulberry32(a) { return function () { a |= 0; a = (a + 0x6d2b79f5) | 0; let t = Math.imul(a ^ (a >>> 15), 1 | a); t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t; return ((t ^ (t >>> 14)) >>> 0) / 4294967296; }; }
+      const $ = (s) => document.querySelector(s);
+      const $$ = (s) => Array.from(document.querySelectorAll(s));
+      function splitWords(el) {
+        const words = el.textContent.trim().split(/\s+/);
+        el.innerHTML = words.map((w) => `<span class="w">${w}</span>`).join(" ");
+        return Array.from(el.querySelectorAll(".w"));
+      }
+      // camera framing: show world point (px,py) at screen (sx,sy) with scale s (origin 0 0)
+      const frame = (px, py, s, sx = W / 2, sy = H / 2) => ({ x: sx - px * s, y: sy - py * s, scale: s });
+      function rectIn(el, ref) {
+        const a = el.getBoundingClientRect(), b = ref.getBoundingClientRect();
+        return { x: a.left - b.left, y: a.top - b.top, w: a.width, h: a.height, cx: a.left - b.left + a.width / 2, cy: a.top - b.top + a.height / 2 };
+      }
+
+      function build() {
+        const tl = gsap.timeline({ paused: true, defaults: { ease: "power3.out" } });
+
+        function superIn(el, tIn, tOut) {
+          const ws = splitWords(el);
+          tl.fromTo(ws, { opacity: 0, y: 30, filter: "blur(14px)" }, { opacity: 1, y: 0, filter: "blur(0px)", duration: 0.9, ease: "expo.out", stagger: 0.07 }, tIn);
+          if (tOut != null) tl.to(ws, { opacity: 0, y: -14, filter: "blur(8px)", duration: 0.35, ease: "power2.in", stagger: 0.03 }, tOut);
+        }
+
+        // ================= Scene 1 =================
+        const frags = [
+          ["why do we forget?", 300, 240, 36, 0.95],
+          ["“We suffer more in imagination than in reality.” — Seneca", 1010, 840, 30, 0.85],
+          ["Lecture 4 — memory is reconstruction", 1150, 180, 30, 0.7],
+          ["book: Thinking, Fast and Slow", 200, 770, 32, 0.78],
+          ["Lena’s birthday → the 12th", 1480, 400, 28, 0.5],
+          ["idea: a podcast about learning", 600, 960, 28, 0.55],
+          ["retrieval > re-reading", 150, 470, 26, 0.42],
+          ["what was that quote?", 830, 310, 26, 0.5],
+          ["#todo call Anna", 1560, 650, 27, 0.5],
+          ["start a herb garden", 760, 120, 25, 0.36],
+          ["sleep consolidates memory", 420, 640, 24, 0.34],
+          ["cookies: less sugar, more salt", 1260, 1000, 24, 0.32],
+        ];
+        const field = $("#s1-field");
+        const fragEls = frags.map(([t, x, y, size, d]) => {
+          const el = document.createElement("div");
+          el.className = "frag";
+          el.textContent = t;
+          const g = Math.round(90 + d * 148);
+          el.style.cssText = `left:${x}px;top:${y}px;font-size:${size}px;color:rgb(${g},${g},${g});`;
+          el.dataset.d = d;
+          field.appendChild(el);
+          return el;
+        });
+        const fragC = fragEls.map((el) => { const r = el.getBoundingClientRect(); return [r.left + r.width / 2, r.top + r.height / 2]; });
+        // one fragment per 8th note — the score plays a pluck on each
+        fragEls.forEach((el, i) => {
+          const d = +el.dataset.d, t = i * 0.3125 + 0.04;
+          const blur = ((1 - d) * 4.5).toFixed(1);
+          tl.fromTo(el, { opacity: 0, y: 14, filter: `blur(${+blur + 8}px)` }, { opacity: 0.35 + d * 0.65, y: 0, filter: `blur(${blur}px)`, duration: 0.9, ease: "expo.out" }, t);
+          const dir = i % 2 ? 1 : -1;
+          tl.fromTo(el, { x: 0 }, { x: dir * (20 + d * 70), duration: Math.max(0.5, 4.0 - t), ease: "none", immediateRender: false }, t);
+        });
+        superIn($("#s1-super"), 1.875, 3.95);
+        // pulled into a single point
+        fragEls.forEach((el, i) => {
+          const dx = 960 - fragC[i][0], dy = 540 - fragC[i][1];
+          tl.to(el, { x: `+=${dx}`, y: dy, scale: 0.15, opacity: 0, filter: "blur(6px)", duration: 0.62, ease: "power3.in" }, 4.0 + (i % 6) * 0.025);
+        });
+        tl.fromTo("#s1-caret", { opacity: 0, scaleY: 0.2 }, { opacity: 1, scaleY: 1, duration: 0.18, ease: "power2.out" }, 4.56);
+        tl.set("#s1-caret", { opacity: 0 }, 4.72);
+        tl.set("#s1-caret", { opacity: 1 }, 4.86);
+
+        // ================= Scene 2 =================
+        const win = $("#s2-win"), root = $("#root");
+        const caret0 = rectIn($("#s2-caret"), root);
+        const anchor = rectIn($("#s2-anchor"), win);
+        const sug = $("#s2-suggest");
+        sug.style.left = anchor.x - 14 + "px";
+        sug.style.top = anchor.y + 40 + "px";
+        const cam2 = $("#s2-cam");
+        // open tight on the caret (matches the caret that ended scene 1)
+        tl.set(cam2, frame(caret0.cx, caret0.cy, 2.25), 5.0);
+        tl.to(cam2, { ...frame(caret0.cx + 150, caret0.cy + 105, 2.0), duration: 1.25, ease: "power2.inOut" }, 5.0);
+        // caret blink, then typing on 16ths
+        const chs = $$("#s2-line .ch");
+        const typeT = [5.15625, 5.3125, 5.46875, 5.625];
+        chs.forEach((c, i) => tl.set(c, { display: "inline" }, typeT[i]));
+        tl.set("#s2-caret", { opacity: 0 }, 5.0 + 0.3125 * 0.5);
+        tl.set("#s2-caret", { opacity: 1 }, 5.15);
+        tl.fromTo(sug, { opacity: 0, y: -8, scale: 0.98 }, { opacity: 1, y: 0, scale: 1, duration: 0.18, ease: "power2.out" }, 5.33);
+        tl.set("#sg-a", { display: "none" }, 5.47);
+        tl.set("#sg-b", { display: "block" }, 5.47);
+        // ↵ on beat 3
+        const SEL = 6.25;
+        tl.to(sug, { opacity: 0, duration: 0.12, ease: "power1.in" }, SEL);
+        chs.forEach((c) => tl.set(c, { display: "none" }, SEL));
+        tl.set("#s2-link", { display: "inline" }, SEL);
+        tl.fromTo("#s2-link", { textShadow: "0 0 18px rgba(168,139,250,0.9)" }, { textShadow: "0 0 0px rgba(168,139,250,0)", duration: 0.9, ease: "power2.out" }, SEL);
+        [6.56, 7.19, 7.81, 8.44, 9.06].forEach((t, i) => tl.set("#s2-caret", { opacity: i % 2 ? 1 : 0 }, t));
+        // pull back to reveal the whole app
+        tl.to(cam2, { x: 0, y: 0, scale: 1, duration: 1.35, ease: "expo.inOut" }, 6.35);
+        superIn($("#s2-super"), 7.0, 9.25);
+        // hover preview on the new link (measured after link is visible → compute from line rect)
+        const line = rectIn($("#s2-line"), win);
+        const linkX = anchor.x + 85, linkY = anchor.cy;
+        const prev = $("#s2-preview");
+        prev.style.left = Math.min(linkX - 60, 1520 - 560) + "px";
+        prev.style.top = line.y - 330 + "px";
+        const cur = $("#s2-cursor");
+        const winR = rectIn(win, root);
+        tl.fromTo(cur, { opacity: 0, x: winR.x + linkX + 230, y: winR.y + linkY + 150 }, { opacity: 1, duration: 0.2, ease: "none" }, 7.45);
+        tl.to(cur, { x: winR.x + linkX + 30, y: winR.y + linkY - 4, duration: 0.55, ease: "power3.inOut" }, 7.5);
+        tl.fromTo(prev, { opacity: 0, y: 14, scale: 0.97, transformOrigin: "20% 100%" }, { opacity: 1, y: 0, scale: 1, duration: 0.45, ease: "expo.out" }, 8.125);
+        tl.fromTo("#s2-preview .bars div", { scaleY: 0, transformOrigin: "50% 100%" }, { scaleY: 1, duration: 0.6, ease: "expo.out", stagger: 0.08 }, 8.25);
+        // collapse into a single node (match cut to the graph)
+        const lx = winR.x + linkX, ly = winR.y + linkY;
+        tl.to(cam2, { ...frame(lx, ly, 0.02), duration: 0.62, ease: "power3.in" }, 9.36);
+        tl.to(cur, { opacity: 0, duration: 0.15 }, 9.3);
+        tl.to("#s2-cam", { opacity: 0, duration: 0.14, ease: "none" }, 9.84);
+        tl.fromTo("#s2-dot", { opacity: 0, scale: 0.2 }, { opacity: 1, scale: 1, duration: 0.18, ease: "power2.out" }, 9.8);
+
+        // ================= Scene 3 · graph =================
+        const R = mulberry32(20240);
+        const N = 150, par = [-1], adj = [[]], depth = [0];
+        for (let i = 1; i < N; i++) {
+          let tot = 0; const w = [];
+          for (let j = 0; j < i; j++) { const ww = Math.pow(adj[j].length + 0.4, 1.45) * (j === 0 ? 0.35 : 1); w.push(ww); tot += ww; }
+          let r = R() * tot, p = 0;
+          for (; p < i - 1; p++) { r -= w[p]; if (r <= 0) break; }
+          par.push(p); adj.push([p]); adj[p].push(i); depth.push(depth[p] + 1);
+        }
+        const edges = [];
+        for (let i = 1; i < N; i++) edges.push([par[i], i, true]);
+        let extra = 0, guard = 0;
+        while (extra < 26 && guard++ < 2000) {
+          const a = Math.floor(R() * N), b = Math.floor(R() * N);
+          if (a === b || depth[a] < 2 || depth[b] < 2 || adj[a].includes(b)) continue;
+          adj[a].push(b); adj[b].push(a); edges.push([a, b, false]); extra++;
+        }
+        // deterministic force layout, root pinned at the origin
+        const P = [[0, 0]];
+        for (let i = 1; i < N; i++) { const a = R() * Math.PI * 2; P.push([P[par[i]][0] + Math.cos(a) * 40, P[par[i]][1] + Math.sin(a) * 40]); }
+        for (let it = 0; it < 520; it++) {
+          const F = P.map(() => [0, 0]);
+          for (let i = 0; i < N; i++) for (let j = i + 1; j < N; j++) {
+            let dx = P[i][0] - P[j][0], dy = P[i][1] - P[j][1]; let d2 = dx * dx + dy * dy + 0.01;
+            const f = Math.min(1500 / d2, 10), d = Math.sqrt(d2);
+            F[i][0] += (dx / d) * f; F[i][1] += (dy / d) * f; F[j][0] -= (dx / d) * f; F[j][1] -= (dy / d) * f;
+          }
+          edges.forEach(([a, b, t]) => {
+            const dx = P[b][0] - P[a][0], dy = P[b][1] - P[a][1], d = Math.sqrt(dx * dx + dy * dy) + 0.01;
+            const f = (d - (t ? 30 : 140)) * (t ? 0.09 : 0.006);
+            F[a][0] += (dx / d) * f; F[a][1] += (dy / d) * f; F[b][0] -= (dx / d) * f; F[b][1] -= (dy / d) * f;
+          });
+          const cool = 1 - it / 600;
+          for (let i = 1; i < N; i++) {
+            F[i][0] -= P[i][0] * 0.0045; F[i][1] -= P[i][1] * 0.0065;
+            P[i][0] += Math.max(-8, Math.min(8, F[i][0])) * cool; P[i][1] += Math.max(-8, Math.min(8, F[i][1])) * cool;
+          }
+        }
+        let mx = 1, my = 1;
+        P.forEach(([x, y]) => { mx = Math.max(mx, Math.abs(x)); my = Math.max(my, Math.abs(y)); });
+        const sc = Math.min(860 / mx, 430 / my);
+        const GX = 960, GY = 590;
+        const pos = P.map(([x, y]) => [GX + x * sc, GY + y * sc]);
+        const deg = adj.map((a) => a.length);
+        // names: hubs get labels like a real vault
+        const order = [...Array(N).keys()].filter((i) => i > 0).sort((a, b) => deg[b] - deg[a]);
+        const focus = order[0];
+        const names = {};
+        names[0] = "How we learn";
+        names[focus] = "Memory";
+        ["Philosophy", "Books", "Writing", "René Descartes", "Teaching", "Seneca", "Ideas"].forEach((n, k) => { if (order[k + 1] != null) names[order[k + 1]] = n; });
+        const nbrNames = ["Forgetting curve", "Retrieval practice", "Sleep", "Working memory", "Chunking", "Attention", "Emotion", "Habits", "Mnemonics", "Spaced repetition", "Dreams", "Learning styles?"];
+        let nk = 0;
+        const late = new Set([focus]);
+        const placed = Object.keys(names).map((k) => pos0(+k));
+        function pos0(i) { return P[i]; }
+        // label only well-spaced neighbours so the highlight stays legible
+        adj[focus].map((n) => [n, Math.hypot(P[n][0] - P[focus][0], P[n][1] - P[focus][1])]).sort((a, b) => b[1] - a[1]).forEach(([n]) => {
+          if (names[n] || nk >= nbrNames.length) return;
+          if (placed.some((q) => Math.hypot(q[0] - P[n][0], (q[1] - P[n][1]) * 1.8) < 62 / sc)) return;
+          names[n] = nbrNames[nk++]; late.add(n); placed.push(P[n]);
+        });
+        const greenSet = new Set();
+        const booksHub = order[2];
+        adj[booksHub].forEach((n) => { if (n !== 0 && n !== focus) greenSet.add(n); }); greenSet.add(booksHub);
+        const NS = "http://www.w3.org/2000/svg";
+        const gE = $("#s3-edges"), gN = $("#s3-nodes"), gL = $("#s3-labels");
+        const appear = [];
+        for (let i = 0; i < N; i++) appear[i] = i === 0 ? 10.0 : 10.04 + depth[i] * 0.27 + R() * 0.3;
+        const nodeEls = [], edgeEls = [], labelEls = {};
+        edges.forEach(([a, b, tree]) => {
+          const ln = document.createElementNS(NS, "line");
+          ln.setAttribute("x1", pos[a][0]); ln.setAttribute("y1", pos[a][1]);
+          ln.setAttribute("x2", pos[b][0]); ln.setAttribute("y2", pos[b][1]);
+          ln.setAttribute("stroke", "#5a5a5a"); ln.setAttribute("stroke-width", "1.3");
+          ln.setAttribute("stroke-opacity", tree ? "0.75" : "0.45");
+          const len = Math.hypot(pos[b][0] - pos[a][0], pos[b][1] - pos[a][1]);
+          ln.setAttribute("stroke-dasharray", len.toFixed(1)); ln.setAttribute("stroke-dashoffset", len.toFixed(1));
+          gE.appendChild(ln); edgeEls.push({ ln, a, b, tree, len });
+        });
+        for (let i = 0; i < N; i++) {
+          const c = document.createElementNS(NS, "circle");
+          const r = i === 0 ? 11 : 3.4 + Math.sqrt(deg[i]) * 1.55;
+          c.setAttribute("cx", pos[i][0]); c.setAttribute("cy", pos[i][1]); c.setAttribute("r", r.toFixed(2));
+          c.setAttribute("fill", greenSet.has(i) ? "#22c55e" : deg[i] > 5 || i === 0 ? "#e8e8e8" : "#b4b4b4");
+          gN.appendChild(c); nodeEls.push(c);
+          if (names[i]) {
+            const t = document.createElementNS(NS, "text");
+            t.setAttribute("x", pos[i][0]); t.setAttribute("y", pos[i][1] + r + 19); t.setAttribute("text-anchor", "middle");
+            if (i === 0 || i === focus) t.setAttribute("style", "font-size:17px;fill:#dadada;font-weight:600");
+            t.textContent = names[i];
+            if (late.has(i)) t.style.opacity = 0;
+            gL.appendChild(t); labelEls[i] = t;
+          }
+        }
+        document.body.dataset.graph = JSON.stringify(appear.map((t, i) => [+t.toFixed(4), Math.round(pos[i][0])]));
+        const cam3 = $("#s3-cam");
+        tl.set(cam3, frame(pos[0][0], pos[0][1], 2.6), 10.0);
+        tl.to(cam3, { ...frame(GX, GY - 10, 1.0), duration: 2.45, ease: "power2.inOut" }, 10.0);
+        nodeEls.forEach((c, i) => {
+          tl.fromTo(c, { scale: 0, opacity: 0, transformOrigin: "50% 50%" }, { scale: 1, opacity: 1, duration: 0.42, ease: "back.out(2.2)" }, appear[i]);
+          if (labelEls[i] && !late.has(i)) tl.fromTo(labelEls[i], { opacity: 0 }, { opacity: 1, duration: 0.4, ease: "power1.out" }, appear[i] + 0.15);
+        });
+        edgeEls.forEach((e) => {
+          const t0 = e.tree ? appear[e.a] + 0.02 : Math.max(appear[e.a], appear[e.b]) + 0.15;
+          tl.to(e.ln, { attr: { "stroke-dashoffset": 0 }, duration: e.tree ? Math.max(0.12, appear[e.b] - t0) : 0.45, ease: e.tree ? "none" : "power2.out" }, t0);
+        });
+        // focus: Obsidian's hover highlight on the "Memory" hub
+        const FT = 12.5;
+        const near = new Set([focus, ...adj[focus]]);
+        nodeEls.forEach((c, i) => {
+          if (near.has(i)) tl.to(c, { attr: { fill: i === focus ? "#c4b5fd" : "#a88bfa" }, scale: i === focus ? 1.5 : 1.25, duration: 0.45, ease: "power2.out" }, FT);
+          else tl.to(c, { opacity: 0.18, duration: 0.45, ease: "power2.out" }, FT);
+        });
+        edgeEls.forEach((e) => {
+          if (e.a === focus || e.b === focus) tl.to(e.ln, { attr: { stroke: "#a88bfa", "stroke-opacity": 0.95, "stroke-width": 2.4 }, duration: 0.45 }, FT);
+          else tl.to(e.ln, { attr: { "stroke-opacity": 0.12 }, duration: 0.45 }, FT);
+        });
+        Object.keys(labelEls).forEach((k) => {
+          const i = +k;
+          if (late.has(i)) tl.to(labelEls[i], { opacity: 1, duration: 0.4 }, FT + 0.1 + (i === focus ? 0 : 0.04 * (i % 7)));
+          else if (!near.has(i)) tl.to(labelEls[i], { opacity: 0.15, duration: 0.45 }, FT);
+        });
+        tl.to(cam3, { ...frame(pos[focus][0], pos[focus][1] - 20, 1.85, 960, 600), duration: 2.0, ease: "power2.inOut" }, FT);
+        superIn($("#s3-super"), 10.55, 14.3);
+        // dive into the focused node → canvas
+        tl.to(cam3, { ...frame(pos[focus][0], pos[focus][1], 7), opacity: 0, duration: 0.5, ease: "power3.in" }, 14.5);
+
+        // ================= Scene 4 · canvas =================
+        const cam4 = $("#s4-cam");
+        const C1 = { x: 1360, y: 860, w: 480, h: 300 };
+        tl.set(cam4, frame(C1.x + C1.w / 2, C1.y + C1.h / 2, 1.3, 960, 590), 15.0);
+        tl.to(cam4, { ...frame(1540, 1010, 0.74, 960, 600), duration: 3.15, ease: "power2.inOut" }, 15.0);
+        tl.fromTo("#cv-main", { opacity: 0, scale: 0.96 }, { opacity: 1, scale: 1, duration: 0.5, ease: "expo.out" }, 15.0);
+        const drops = [
+          ["#g-lecture", 15.3125], ["#cv-spaced", 15.625], ["#g-phil", 15.9375], ["#cv-cogito", 16.25],
+        ];
+        drops.forEach(([s, t]) => tl.fromTo(s, { opacity: 0, y: 26, scale: 0.94 }, { opacity: 1, y: 0, scale: 1, duration: 0.55, ease: "expo.out" }, t));
+        tl.fromTo(".in-lec", { opacity: 0, y: 18 }, { opacity: 1, y: 0, duration: 0.5, ease: "expo.out", stagger: 0.07 }, 15.42);
+        tl.fromTo(".in-phil", { opacity: 0, y: 18, scale: 0.95 }, { opacity: 1, y: 0, scale: 1, duration: 0.5, ease: "expo.out", stagger: 0.1 }, 16.05);
+        const svg4 = $("#s4-edges");
+        const cvEdges = [
+          [[1360, 1000], [1160, 960], "#arw", "#9a9a9a"],
+          [[1840, 930], [1990, 760], "#arwp", "#a88bfa"],
+          [[1840, 1060], [1960, 1220], "#arw", "#9a9a9a"],
+          [[1600, 1160], [1600, 1300], "#arw", "#9a9a9a"],
+        ];
+        cvEdges.forEach(([a, b, mk, col], k) => {
+          const p = document.createElementNS(NS, "path");
+          const horiz = Math.abs(b[0] - a[0]) > Math.abs(b[1] - a[1]);
+          const d = horiz
+            ? `M${a[0]} ${a[1]} C${(a[0] + b[0]) / 2} ${a[1]} ${(a[0] + b[0]) / 2} ${b[1]} ${b[0]} ${b[1]}`
+            : `M${a[0]} ${a[1]} C${a[0]} ${(a[1] + b[1]) / 2} ${b[0]} ${(a[1] + b[1]) / 2} ${b[0]} ${b[1]}`;
+          p.setAttribute("d", d); p.setAttribute("fill", "none"); p.setAttribute("stroke", col); p.setAttribute("stroke-width", "3.5");
+          p.setAttribute("stroke-linecap", "round"); p.setAttribute("marker-end", `url(${mk})`);
+          svg4.appendChild(p);
+          const len = p.getTotalLength();
+          p.setAttribute("stroke-dasharray", len); p.setAttribute("stroke-dashoffset", len);
+          tl.to(p, { attr: { "stroke-dashoffset": 0 }, duration: 0.55, ease: "power2.inOut" }, 15.75 + k * 0.22);
+          tl.fromTo(p, { opacity: 0 }, { opacity: 1, duration: 0.1 }, 15.75 + k * 0.22);
+        });
+        superIn($("#s4-super"), 15.25, 18.05);
+        // push into the main card → flips into its file
+        tl.to(cam4, { ...frame(C1.x + C1.w / 2, C1.y + C1.h / 2, 1.6), duration: 0.6, ease: "power3.inOut" }, 18.15);
+        tl.to(["#g-lecture", ".in-lec", "#cv-spaced", "#g-phil", ".in-phil", "#cv-cogito", "#s4-edges"], { opacity: 0, duration: 0.4, ease: "power1.in" }, 18.2);
+
+        // ================= Scene 5 · ownership =================
+        const flip = $("#s5-flip");
+        tl.to("#s5-canvasbg", { opacity: 0, duration: 0.8, ease: "power1.inOut" }, 18.9);
+        tl.fromTo(flip, { rotationY: 0 }, { rotationY: 180, duration: 0.85, ease: "power3.inOut" }, 18.9);
+        // swap faces exactly at 90° (backface-visibility alone is not trusted)
+        tl.fromTo("#s5 .face.back", { opacity: 0 }, { opacity: 1, duration: 0.01, ease: "none" }, 19.325);
+        tl.to("#s5 .face.front", { opacity: 0, duration: 0.01, ease: "none" }, 19.325);
+        tl.fromTo("#s5-stage", { y: 0, scale: 1 }, { y: 24, scale: 1.04, duration: 0.85, ease: "power3.inOut" }, 18.9);
+        tl.to("#s5-stage", { scale: 1.07, duration: 2.6, ease: "none" }, 19.75);
+        superIn($("#s5-super"), 19.35, 21.95);
+        $$("#s5 .chip").forEach((c, i) => tl.fromTo(c, { opacity: 0, y: 22 }, { opacity: 1, y: 0, duration: 0.6, ease: "expo.out" }, 20.0 + i * 0.3125));
+        tl.to(["#s5-stage", "#s5 .chips"], { opacity: 0, y: "+=30", duration: 0.4, ease: "power2.in" }, 22.05);
+
+        // ================= Scene 6 · plugins =================
+        tl.fromTo("#s6-panel", { opacity: 0, y: 70 }, { opacity: 1, y: 0, duration: 0.75, ease: "expo.out" }, 22.5);
+        superIn($("#s6-super"), 22.55, 24.6);
+        const togT = [23.125, 23.4375, 23.75, 24.0625];
+        $$("#s6 .tog").forEach((tg, i) => {
+          tl.to(tg.querySelector(".on"), { opacity: 1, duration: 0.16, ease: "power1.out" }, togT[i]);
+          tl.to(tg.querySelector(".kn"), { x: 26, background: "#ffffff", duration: 0.2, ease: "power3.out" }, togT[i]);
+        });
+        tl.fromTo("#s6-sub", { opacity: 0, y: 14 }, { opacity: 1, y: 0, duration: 0.6, ease: "expo.out" }, 23.3);
+        tl.to(["#s6-panel", "#s6-sub"], { opacity: 0, scale: 0.97, duration: 0.38, ease: "power2.in" }, 24.62);
+
+        // ================= Scene 7 · end card =================
+        tl.fromTo("#s7-group", { scale: 1 }, { scale: 1.035, duration: 5, ease: "none" }, 25.0);
+        tl.fromTo("#s7-glow", { opacity: 0, scale: 0.7 }, { opacity: 1, scale: 1, duration: 1.6, ease: "power2.out" }, 25.0);
+        tl.fromTo("#s7-mark", { opacity: 0, scale: 0.7, y: 34, filter: "blur(18px)" }, { opacity: 1, scale: 1, y: 0, filter: "blur(0px)", duration: 1.15, ease: "expo.out" }, 25.0);
+        tl.fromTo("#s7-shine", { backgroundPosition: "130% 0" }, { backgroundPosition: "-30% 0", duration: 1.1, ease: "power2.inOut" }, 25.55);
+        tl.fromTo("#s7-word", { opacity: 0, y: 18 }, { opacity: 1, y: 0, duration: 0.9, ease: "expo.out" }, 25.625);
+        // lockup lifts, hero line lands on bar 12
+        tl.to("#s7-lockup", { y: -160, scale: 0.6, transformOrigin: "960px 420px", duration: 0.85, ease: "power3.inOut" }, 26.9);
+        tl.to("#s7-glow", { y: -130, scale: 0.7, opacity: 0.7, duration: 0.85, ease: "power3.inOut" }, 26.9);
+        const hw = splitWords($("#s7-head"));
+        tl.fromTo(hw, { opacity: 0, y: 34, filter: "blur(14px)" }, { opacity: 1, y: 0, filter: "blur(0px)", duration: 1.0, ease: "expo.out", stagger: 0.08 }, 27.5);
+        tl.fromTo("#s7-sub", { opacity: 0, y: 16 }, { opacity: 1, y: 0, duration: 0.8, ease: "expo.out" }, 28.0);
+        tl.fromTo("#s7-btn", { opacity: 0, y: 16, scale: 0.96 }, { opacity: 1, y: 0, scale: 1, duration: 0.8, ease: "expo.out" }, 28.3);
+        tl.fromTo("#s7-url", { opacity: 0 }, { opacity: 1, duration: 0.8, ease: "power1.out" }, 28.55);
+
+        window.__timelines["main"] = tl;
+        if (window.__hfForceTimelineRebind) window.__hfForceTimelineRebind();
+      }
+
+      Promise.all([400, 500, 600, 700].map((w) => document.fonts.load(`${w} 40px Inter`))).then(() => document.fonts.ready).then(build);
+    </script>
+  </body>
+</html>
